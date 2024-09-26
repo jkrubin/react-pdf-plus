@@ -1,5 +1,6 @@
 export type HighlightEnd = {
   element: Element | null;
+  page: number;
   offset: number;
   offsetPxStartLetter: number;
   offsetPxEndLetter: number;

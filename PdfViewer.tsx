@@ -12,12 +12,10 @@ import {
   ListOnScrollProps,
   VariableSizeList,
 } from 'react-window';
-import * as pdfjsLib from 'pdfjs-dist';
-import Page from './Page';
 import './style.css';
 import { usePdf } from './PdfContext';
 import debounce from 'debounce';
-import TestPage from './TestPage';
+import Page from './Page';
 import { PdfHighlighterProvider } from './PdfHighlighter';
 import { DocumentInitParameters } from 'pdfjs-dist/types/src/display/api';
 
@@ -29,6 +27,7 @@ import { DocumentInitParameters } from 'pdfjs-dist/types/src/display/api';
 interface PdfViewerProps {
   url: string;
   fileOptions?: any;
+  documentLoadingContnet?: ReactNode;
   tooltipContent?: ReactNode;
   tooltipClassName?: string;
 }
@@ -39,12 +38,14 @@ interface PageDimensions {
 const PdfViewer: React.FC<PdfViewerProps> = ({
   url,
   fileOptions = {},
+  documentLoadingContnet,
   tooltipContent,
   tooltipClassName,
 }) => {
   const {
     documentStatus,
     setdocumentStatus,
+    onDocumentLoad,
     pdfDocument,
     setPdfDocument,
     setNumPages,
@@ -65,7 +66,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   } = usePdf();
 
   const [documentHeight, setDocumentHeight] = useState(0);
-
+  const [pdfPadding, setPdfPadding] = useState({ w: 20, h: 10 });
   // Calculate row height for each page
   const computeRowHeight = useCallback(
     (index: number) => {
@@ -130,7 +131,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
         });
         totalHeight += viewport.height;
       }
-
+      onDocumentLoad();
       setDocumentHeight(totalHeight);
       setPageDimensions(dimensions);
       setdocumentStatus('READY');
@@ -156,9 +157,10 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
       // Get the first page of the PDF to determine the original viewport width
       const page = await pdfDocument?.getPage(1);
       const viewport = page?.getViewport({ scale: 1.0 });
-      const originalViewportWidth = viewport?.width;
-      const { width } = entries[0].contentRect;
-      setScale(width / (originalViewportWidth || 600));
+      const pdfOriginalViewportWidth = viewport?.width || 0;
+      const { width: containerWidth } = entries[0].contentRect;
+      const containerWidthWithPadding = containerWidth - pdfPadding.w;
+      setScale(containerWidthWithPadding / pdfOriginalViewportWidth);
     }, 500),
     [pdfDocument, currentPage],
   );
@@ -189,7 +191,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
       <div
         style={{
           height: '100%',
-          border: '3px solid #666',
+          border: '1px solid rgb(213 213 213)',
           borderRadius: '5px',
         }}
       >
@@ -200,6 +202,12 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
             position: 'relative',
           }}
         >
+          {documentStatus === 'LOADING' &&
+            (documentLoadingContnet ? (
+              documentLoadingContnet
+            ) : (
+              <div>Loading Document...</div>
+            ))}
           {documentStatus === 'READY' && (
             /**
              * IMPORTANT NOTE: VariableSizeList Will rerender every time props/context changes
@@ -210,7 +218,10 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
               height={containerRef.current?.getBoundingClientRect().height || 0}
               width={containerRef.current?.getBoundingClientRect().width || 0}
               itemCount={pdfDocument?.numPages || 0}
-              itemSize={computeRowHeight}
+              itemSize={
+                (index: number) => computeRowHeight(index) + pdfPadding.h
+                // computeRowHeight(index) + pdfPadding.h
+              }
               itemData={{
                 scale,
                 numPages: pdfDocument?.numPages || 0,
@@ -223,7 +234,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
             >
               {({ index, style }) => (
                 <div style={style}>
-                  <TestPage
+                  <Page
                     pdfDocument={pdfDocument!}
                     pageNumber={index + 1}
                     scale={scale}

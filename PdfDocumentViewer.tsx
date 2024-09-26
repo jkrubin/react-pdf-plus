@@ -6,6 +6,7 @@ import { DocumentInitParameters } from 'pdfjs-dist/types/src/display/api';
 type PDFDocumentViewerProps = {
   url: string;
   fileOptions?: DocumentInitParameters;
+  documentLoadingContnet?: ReactNode;
   tooltipContent?: ReactNode;
   tooltipClassName?: string;
   pageNumber?: number;
@@ -17,6 +18,7 @@ type PDFDocumentViewerProps = {
 export const PdfDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
   url,
   fileOptions,
+  documentLoadingContnet,
   tooltipContent,
   tooltipClassName,
   pageNumber,
@@ -35,7 +37,15 @@ export const PdfDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
         onUpdateNumPages,
       }}
     >
-      <PdfViewer {...{ url, fileOptions, tooltipContent, tooltipClassName }} />
+      <PdfViewer
+        {...{
+          url,
+          fileOptions,
+          tooltipContent,
+          tooltipClassName,
+          documentLoadingContnet,
+        }}
+      />
     </PdfProvider>
   );
 };

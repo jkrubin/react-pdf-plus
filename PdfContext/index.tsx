@@ -24,6 +24,7 @@ interface PageDimensions {
 export interface CitationText {
   match: string;
   exactMatch: boolean;
+  page: number;
 }
 type DocumentStatus = 'UNSET' | 'LOADING' | 'ERROR' | 'READY';
 
@@ -38,6 +39,7 @@ interface PdfContextProps {
   citationText: CitationText | null;
   setCitationText: React.Dispatch<React.SetStateAction<CitationText | null>>;
   documentStatus: DocumentStatus;
+  onDocumentLoad: () => void;
   overscanCount: number;
   setdocumentStatus: (status: DocumentStatus) => void;
   pdfDocument: PDFDocumentProxy | null;
@@ -150,9 +152,15 @@ export const PdfProvider: React.FC<PropsWithChildren & PdfProviderProps> = ({
     }
   };
 
+  const onDocumentLoad = () => {
+    setCurrentPageAndScroll(pageNumber || 0);
+  };
+
   const scrollToPage = useCallback((pageIndex: number) => {
     if (listRef.current) {
       listRef.current.scrollToItem(pageIndex - 1, 'start');
+    } else {
+      setTimeout(() => scrollToPage(pageIndex), 500);
     }
   }, []);
 
@@ -249,6 +257,9 @@ export const PdfProvider: React.FC<PropsWithChildren & PdfProviderProps> = ({
   }, [currentPage]);
 
   useEffect(() => {
+    if (citationProps === null) {
+      setCitationText(null);
+    }
     if (
       citationProps &&
       citationProps?.match !== citationText?.match &&
@@ -265,6 +276,7 @@ export const PdfProvider: React.FC<PropsWithChildren & PdfProviderProps> = ({
         overscanCount,
         documentStatus,
         setdocumentStatus,
+        onDocumentLoad,
         pdfDocument,
         setPdfDocument,
         numPages,

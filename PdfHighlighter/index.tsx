@@ -33,6 +33,7 @@ const PdfHighlighterContext = createContext<PdfHighlighterContextType>({
 const emptyHighlightEnd: HighlightEnd = {
   element: null,
   offset: -1,
+  page: -1,
   offsetPxStartLetter: -1,
   offsetPxEndLetter: -1,
 };
@@ -595,17 +596,23 @@ export const PdfHighlighterProvider: React.FC<PdfHighlighterProps> = ({
     setIsHighlighting(false);
     const range = createRangeFromHighlight();
     if (range) {
-      setCitationText({ match: range.toString(), exactMatch: false });
+      setCitationText({
+        match: range.toString(),
+        page: highlightAnchor.page,
+        exactMatch: false,
+      });
     }
     setHighlightAnchor({
       element: null,
       offset: -1,
+      page: -1,
       offsetPxStartLetter: -1,
       offsetPxEndLetter: -1,
     });
     setHighlightCurrent({
       element: null,
       offset: -1,
+      page: -1,
       offsetPxStartLetter: -1,
       offsetPxEndLetter: -1,
     });
@@ -628,6 +635,7 @@ export const PdfHighlighterProvider: React.FC<PdfHighlighterProps> = ({
       }
       const currentHighlight: HighlightEnd = {
         element: span,
+        page: page,
         offset: offsetIndex ? offsetIndex - 1 : 0,
         offsetPxStartLetter: 0,
         offsetPxEndLetter: 0,
@@ -644,6 +652,7 @@ export const PdfHighlighterProvider: React.FC<PdfHighlighterProps> = ({
     }
     event.preventDefault();
     let currentHighlight: HighlightEnd | false = false;
+    const focusPage = findPageInFocus(event);
     const elementUnderCursor = document.elementFromPoint(
       event.clientX,
       event.clientY,
@@ -661,6 +670,7 @@ export const PdfHighlighterProvider: React.FC<PdfHighlighterProps> = ({
         setHighlightAnchor({
           element: hoveredContainer as HTMLElement,
           offset: offsetNum ?? 0,
+          page: focusPage,
           offsetPxStartLetter: offsetPxStartLetter ?? 0,
           offsetPxEndLetter: offsetPxEndLetter ?? 0,
         });
@@ -668,6 +678,7 @@ export const PdfHighlighterProvider: React.FC<PdfHighlighterProps> = ({
       currentHighlight = {
         element: hoveredContainer as HTMLElement,
         offset: offsetNum ?? 0,
+        page: focusPage,
         offsetPxStartLetter: offsetPxStartLetter ?? 0,
         offsetPxEndLetter: offsetPxEndLetter ?? 0,
       };
